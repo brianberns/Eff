@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eff.Core", "Eff.Core\Eff.Core.fsproj", "{DEBE38C8-506D-4CF0-934C-9210CDEFFE8C}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Eff.Harness", "Eff.Harness\Eff.Harness.fsproj", "{14652F47-E029-4A53-AD42-C6F53F081EEC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{DEBE38C8-506D-4CF0-934C-9210CDEFFE8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DEBE38C8-506D-4CF0-934C-9210CDEFFE8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DEBE38C8-506D-4CF0-934C-9210CDEFFE8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14652F47-E029-4A53-AD42-C6F53F081EEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14652F47-E029-4A53-AD42-C6F53F081EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14652F47-E029-4A53-AD42-C6F53F081EEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14652F47-E029-4A53-AD42-C6F53F081EEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A9BBFB3-6449-4ACB-8E2B-62C70BBC1B46}
 	EndGlobalSection
 EndGlobal

@@ -1,25 +1,26 @@
 ﻿namespace Eff.Core
 
-open System
-
-// Core types and Builder
-type Eff<'U, 'A when 'U :> Effect> = Eff of (('A -> Effect) -> Effect)
 // Annotation type for Effects
-and Effect = 
+type Effect =
     abstract UnPack : Lambda -> Effect 
 and Lambda =
-        abstract Invoke<'X> : ('X -> Effect) -> ('X -> Effect)
+    abstract Invoke<'X> : ('X -> Effect) -> ('X -> Effect)
+
+type Eff<'U, 'A when 'U :> Effect> =
+    Eff of (('A -> Effect) -> Effect)
+
 and Done<'A>(v : 'A) =
     member self.Value = v
     interface Effect with
         member self.UnPack(_ : Lambda) : Effect =
-                new Done<'A>(v) :> _
+            new Done<'A>(v) :> _
 
 // Basic builder 
 type EffBuilder() = 
     member self.Return<'U, 'A when 'U :> Effect> (v : 'A) : Eff<'U, 'A> = 
         Eff (fun k -> k v)
-    member self.ReturnFrom (eff : Eff<'U, 'A>) = eff
+    member self.ReturnFrom (eff : Eff<'U, 'A>) =
+        eff
     member self.Combine (first : Eff<'U, 'A>, second : Eff<'U, unit>) : Eff<'U, unit> = 
         self.Bind(first, fun _ -> second)
     member self.Zero () : Eff<'U, unit> = 
@@ -47,4 +48,3 @@ module Eff =
             | _ -> failwithf "Unhandled effect %A" effect
 
     let eff = new EffBuilder()
-    
