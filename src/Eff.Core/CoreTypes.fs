@@ -2,7 +2,11 @@
 
 /// Annotation type for effects.
 type Effect =
-    abstract UnPack : Lambda -> Effect 
+
+    /// Converts the receiver into another effect using the given lambda.
+    abstract UnPack : Lambda -> Effect
+
+/// Converts a continuation to another continuation of the same type.
 and Lambda =
     abstract Invoke<'X> : ('X -> Effect) -> ('X -> Effect)
 
