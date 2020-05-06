@@ -1,9 +1,9 @@
 ﻿namespace Eff.Core
 
-/// Stateful effect.
+/// State effect base.
 type State<'S> = inherit Effect
 
-/// Saves the given value as the current state.
+/// Put effect.
 type Put<'S>(v : 'S, k : unit -> Effect) =
     interface State<'S> with
         member self.UnPack(lambda : Lambda) : Effect =
@@ -11,7 +11,7 @@ type Put<'S>(v : 'S, k : unit -> Effect) =
     member self.Value = v
     member self.K = k
 
-/// Gets the current state.
+/// Get effect.
 type Get<'S>(k : 'S -> Effect) =
     interface State<'S> with
         member self.UnPack(lambda : Lambda) : Effect =             
@@ -20,15 +20,14 @@ type Get<'S>(k : 'S -> Effect) =
 
 module State = 
 
-    // state effect handlers
-    
+    /// State effect handler.
     let rec stateHandler<'S, 'A> (state : 'S) (Eff inc : Eff<State<'S>, 'A>) =
 
         let rec loop k state (effect : Effect) =
             match effect with
-                | :? Get<'S> as get -> loop k state (get.K state) 
+                | :? Get<'S> as get -> loop k state (get.K state)
                 | :? Put<'S> as put -> loop k put.Value (put.K ())
-                | :? Done<'A> as done' -> k (state, done'.Value)
+                | :? Done<'A> as done' -> k done'.Value
                 | _ ->
                     effect.UnPack
                         {
@@ -40,26 +39,10 @@ module State =
         let effect = inc done'
         Eff (fun k -> loop k state effect)
 
-    let rec refHandler<'S, 'A> (state : 'S) (Eff inc : Eff<State<'S>, 'A>) : Eff<State<'S>, 'A> =
-
-        let valueRef = ref state
-
-        let rec loop  (k : 'A -> Effect) (effect : Effect) : Effect =
-            match effect with
-            | :? Get<'S> as get -> loop k (get.K !valueRef) 
-            | :? Put<'S> as put -> valueRef := put.Value; loop k (put.K ())
-            | :? Done<'A> as done' -> k done'.Value
-            | _ -> effect.UnPack {
-                new Lambda with
-                    member self.Invoke<'X> (k' : 'X -> Effect) = 
-                        fun x -> loop k (k' x)
-            }
-
-        let effect = inc done'
-        Eff (fun k -> loop k effect)
-
-    // state helper functions
-    let get<'S>() : Eff<State<'S>, 'S> =
-        shift (fun k -> new Get<'S>(k) :> _)
+    /// Sets the current state.
     let put<'S> (s : 'S) : Eff<State<'S>, unit> =
         shift (fun k -> new Put<'S>(s, k) :> _)
+
+    /// Gets the current state.
+    let get<'S>() : Eff<State<'S>, 'S> =
+        shift (fun k -> new Get<'S>(k) :> _)
