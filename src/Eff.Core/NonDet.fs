@@ -25,10 +25,10 @@ module NonDet =
     
     // non-determinism helper functions
     let choose<'T, 'U when 'U :> NonDetEffect> (first : 'T, second : 'T) : Eff<'U, 'T> = 
-        shift (fun k -> new Choose<'T>(first, second, k) :> _)
+        Effect.shift (fun k -> new Choose<'T>(first, second, k) :> _)
 
     let fail<'U when 'U :> NonDetEffect> () : Eff<'U, unit> = 
-        shift (fun k -> new Fail(k) :> _)
+        Effect.shift (fun k -> new Fail(k) :> _)
 
     // non-determinism effect handlers
     let nonDetHandler<'U, 'A when 'U :> NonDetEffect> 
@@ -51,6 +51,6 @@ module NonDet =
                                 fun x -> loop k (k' x)
                     }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop k effect)
 

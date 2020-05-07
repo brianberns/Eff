@@ -21,6 +21,22 @@ type Done<'A>(v : 'A) =
         member self.UnPack(_ : Lambda) : Effect =
             self :> _
 
+module Effect =
+
+    /// A continuation that creates an effect from the given value.
+    let done' (v : 'A) : Effect =
+        Done(v) :> _
+
+    /// Wraps the given incomplete computation.
+    let shift (inc : ('A -> Effect) -> Effect) : Eff<'U, 'A> =
+        Eff inc
+
+    /// Extracts a value from the given incomplete computation.
+    let rec run<'U, 'A when 'U :> Effect> (Eff inc : Eff<'U, 'A>) : 'A =
+        match inc done' with
+            | :? Done<'A> as dn -> dn.Value
+            | effect -> failwithf "Unhandled effect %A" effect
+
 // Basic builder 
 type EffBuilder() =
 
@@ -54,21 +70,7 @@ type EffBuilder() =
             inc k)
 
 [<AutoOpen>]
-module Eff =
-
-    /// A continuation that creates an effect from the given value.
-    let done' (v : 'A) : Effect =
-        Done(v) :> _
-
-    /// Wraps the given incomplete computation.
-    let shift (inc : ('A -> Effect) -> Effect) : Eff<'U, 'A> =
-        Eff inc
-
-    /// Extracts a value from the given incomplete computation.
-    let rec run<'U, 'A when 'U :> Effect> (Eff inc : Eff<'U, 'A>) : 'A =
-        match inc done' with
-            | :? Done<'A> as dn -> dn.Value
-            | effect -> failwithf "Unhandled effect %A" effect
+module EffBuilder =
 
     /// Workflow builder.
-    let eff = new EffBuilder()
+    let eff = EffBuilder()

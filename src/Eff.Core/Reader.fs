@@ -10,7 +10,7 @@ type Ask<'E>(k : 'E -> Effect) =
 module Reader = 
 
     let ask<'U, 'E when 'U :> Reader<'E>>() : Eff<'U, 'E> = 
-        shift (fun k -> new Ask<'E>(k) :> _)
+        Effect.shift (fun k -> new Ask<'E>(k) :> _)
 
     let rec readerHandler<'U, 'E, 'A when 'U :> Reader<'E>> 
         : 'E -> Eff<'U, 'A> -> Eff<'U, 'A> = 
@@ -25,5 +25,5 @@ module Reader =
                             fun x -> loop k env (k' x)
                 }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop k env effect)

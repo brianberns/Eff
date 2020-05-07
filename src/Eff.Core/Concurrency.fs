@@ -25,10 +25,10 @@ module Concurrent =
 
     // concurrency helper functions
     let fork<'U when 'U :> Concur> : Eff<'U, unit> -> Eff<'U, unit> =  
-        fun eff -> shift (fun k -> let (Eff cont) = eff in new Fork(cont k, k) :> _)
+        fun eff -> Effect.shift (fun k -> let (Eff cont) = eff in new Fork(cont k, k) :> _)
 
     let yield'<'U when 'U :> Concur>() : Eff<'U, unit> = 
-        shift (fun k -> new Yield(k) :> _)
+        Effect.shift (fun k -> new Yield(k) :> _)
 
 
     // concurrency effect handlers
@@ -60,7 +60,7 @@ module Concurrent =
                                     fun x -> loop s queue k (k' x)
                         }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop [] (new Queue<_>()) k effect)
 
     let rec threadPoolHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> 
@@ -84,7 +84,7 @@ module Concurrent =
                                     fun x -> loop k (k' x)
                         }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop k effect)
 
        

@@ -11,7 +11,7 @@ let testState () =
             return! State.get ()
         } 
 
-    let x = comp |> State.stateHandler 1 |> run // 4
+    let x = comp |> State.stateHandler 1 |> Effect.run // 4
     printfn "%A" x
 
 let testStack () =
@@ -28,7 +28,7 @@ let testStack () =
         }
 
     let stack = [9; 0; 2; 1; 0] |> Eff.Collections.Stack.ofList
-    let x = comp |> Stack.stackHandler stack |> run   // (Stack [8; 3; 0; 2; 1; 0], 9)
+    let x = comp |> Stack.stackHandler stack |> Effect.run   // (Stack [8; 3; 0; 2; 1; 0], 9)
     printfn "%A" x
 
 [<EntryPoint>]

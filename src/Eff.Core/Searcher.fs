@@ -12,7 +12,7 @@ module Searcher =
 
     // helper functions
     let search<'U, 'S when 'U :> Search<'S>> : 'S -> Eff<'U, bool> =
-        fun v -> shift (fun k -> new Search<'S>(v, k) :> _)
+        fun v -> Effect.shift (fun k -> new Search<'S>(v, k) :> _)
 
     // effect handlers
     let rec findNeighborhoodHandler<'U when 'U :> Search<int>> 
@@ -35,5 +35,5 @@ module Searcher =
                                 fun x -> loop s k (k' x)
                     }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop [] k effect)

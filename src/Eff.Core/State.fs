@@ -36,13 +36,13 @@ module State =
                                     fun x -> loop k state (k' x)
                         }
 
-        let effect = inc done'
+        let effect = inc Effect.done'
         Eff (fun k -> loop k state effect)
 
     /// Sets the current state.
     let put<'S> (s : 'S) : Eff<State<'S>, unit> =
-        shift (fun k -> new Put<'S>(s, k) :> _)
+        Effect.shift (fun k -> new Put<'S>(s, k) :> _)
 
     /// Gets the current state.
     let get<'S>() : Eff<State<'S>, 'S> =
-        shift (fun k -> new Get<'S>(k) :> _)
+        Effect.shift (fun k -> new Get<'S>(k) :> _)

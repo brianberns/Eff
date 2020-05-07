@@ -16,7 +16,7 @@ module Log =
 
     // log helper functions
     let log<'U, 'S when 'U :> Log<'S>> : 'S -> Eff<'U, unit> = 
-        fun s -> shift (fun k -> new LogEntry<'S>(s, k) :> _)
+        fun s -> Effect.shift (fun k -> new LogEntry<'S>(s, k) :> _)
     let logf fmt = Printf.ksprintf log fmt
     
 
@@ -38,7 +38,7 @@ module Log =
                                     fun x -> loop s k (k' x)
                         }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop [] k effect)
 
     let rec consoleLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
@@ -56,7 +56,7 @@ module Log =
                                 fun x -> loop k (k' x)
                     }
             let (Eff effK) = eff
-            let effect = effK done'
+            let effect = effK Effect.done'
             Eff (fun k -> loop k effect)
 
 

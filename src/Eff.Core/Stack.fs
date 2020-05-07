@@ -60,13 +60,13 @@ module Stack =
                                     fun x -> loop k stack (k' x)
                         }
 
-        let effect = inc done'
+        let effect = inc Effect.done'
         Eff (fun k -> loop k stack effect)
 
     /// Pushes a value on the stack.
     let push<'S> (s : 'S) : Eff<Stack<'S>, unit> =
-        shift (fun k -> new Push<'S>(s, k) :> _)
+        Effect.shift (fun k -> new Push<'S>(s, k) :> _)
 
     /// Pops a value from the stack.
     let pop<'S>() : Eff<Stack<'S>, 'S> =
-        shift (fun k -> new Pop<'S>(k) :> _)
+        Effect.shift (fun k -> new Pop<'S>(k) :> _)
