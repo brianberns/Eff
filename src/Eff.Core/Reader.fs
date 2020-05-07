@@ -4,7 +4,7 @@
 type Reader<'E> = inherit Effect
 
 /// Ask effect.
-type Ask<'E>(k : 'E -> Effect) =
+type Ask<'E>(k : 'E -> _) =
     interface Reader<'E> with
         member self.UnPack(lambda : Lambda) =
             Ask(lambda.Invoke(k)) :> _
@@ -23,7 +23,7 @@ module Reader =
                     effect.UnPack
                         {
                             new Lambda with
-                                member self.Invoke<'X>(k' : 'X -> Effect) =
+                                member self.Invoke(k') =
                                     fun x -> loop k env (k' x)
                         }
 
@@ -31,5 +31,5 @@ module Reader =
         Inc (fun k -> loop k env effect)
 
     /// Reads the current environment.
-    let ask<'U, 'E when 'U :> Reader<'E>>() : Inc<'U, 'E> = 
+    let ask<'U, 'E when 'U :> Reader<'E>> () : Inc<'U, _> =
         Inc (fun k -> Ask<'E>(k) :> _)

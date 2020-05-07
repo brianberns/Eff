@@ -66,8 +66,8 @@ module Stack =
 
     /// Pushes a value on the stack.
     let push<'U, 'S when 'U :> Stack<'S>> (s : 'S) : Inc<'U, _> =
-        Inc (fun k -> new Push<'S>(s, k) :> _)
+        Inc (fun k -> Push<'S>(s, k) :> _)
 
     /// Pops a value from the stack.
     let pop<'U, 'S when 'U :> Stack<'S>> () : Inc<'U, _> =
-        Inc (fun k -> new Pop<'S>(k) :> _)
+        Inc (fun k -> Pop<'S>(k) :> _)

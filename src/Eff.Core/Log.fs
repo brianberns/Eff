@@ -1,56 +1,64 @@
 ﻿namespace Eff.Core
 
-
-// Basic log operation
+/// Log effect base.
 type Log<'S> = inherit Effect
 
+/// Log entry effect.
 type LogEntry<'S>(v : 'S, k : unit -> Effect) =
     interface Log<'S> with
-        member self.UnPack(lambda : Lambda) : Effect =
-            new LogEntry<'S>(v, lambda.Invoke<unit> k) :> _
+        member self.UnPack(lambda : Lambda) =
+            LogEntry(v, lambda.Invoke<unit> k) :> _
     member self.Value = v
     member self.K = k
 
-
 module Log = 
 
-    // log helper functions
-    let log<'U, 'S when 'U :> Log<'S>> : 'S -> Inc<'U, unit> = 
-        fun s -> Inc (fun k -> new LogEntry<'S>(s, k) :> _)
-    let logf fmt = Printf.ksprintf log fmt
+    /// Pure log effect handler.
+    let rec pureLogHandler<'U, 'S, 'A when 'U :> Log<'S>> (inc : Inc<'U, 'A>) : Inc<'U, _> =
 
-    // log effect handlers
-    let rec pureLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
-        : Inc<'U, 'A> -> Inc<'U, 'A * list<'S>> = 
-        fun inc ->
-            let rec loop : list<'S> -> (('A * list<'S>) -> Effect) -> Effect -> Effect = 
-                fun s k effect ->
-                    match effect with
-                    | :? LogEntry<'S> as log -> 
-                        loop (log.Value :: s) k (log.K ()) 
-                    | :? Done<'A> as done' -> k (done'.Value, s)
-                    | _ -> 
-                        effect.UnPack {
+        let rec loop log k (effect : Effect) =
+            match effect with
+                | :? LogEntry<'S> as logEntry ->
+                    let log' = logEntry.Value :: log
+                    loop log' k (logEntry.K ())
+                | :? Done<'A> as done' ->
+                    k (done'.Value, log)
+                | _ -> 
+                    effect.UnPack
+                        {
                             new Lambda with
-                                member self.Invoke<'X> (k' : 'X -> Effect) = 
-                                    fun x -> loop s k (k' x)
+                                member self.Invoke(k') =
+                                    fun x -> loop log k (k' x)
                         }
-            let effect = Inc.run inc Effect.done'
-            Inc (fun k -> loop [] k effect)
 
-    let rec consoleLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
-        : Inc<'U, 'A> -> Inc<'U, 'A> = 
-        fun inc ->
-            let rec loop : ('A -> Effect) -> Effect -> Effect = 
-                fun k effect ->
-                    match effect with
-                    | :? LogEntry<'S> as log -> 
-                        printfn "Log: %A" log.Value; loop k (log.K ())
-                    | :? Done<'A> as done' -> k done'.Value
-                    | _ -> effect.UnPack {
-                        new Lambda with
-                            member self.Invoke<'X> (k' : 'X -> Effect) = 
-                                fun x -> loop k (k' x)
-                    }
-            let effect = Inc.run inc Effect.done'
-            Inc (fun k -> loop k effect)
+        let effect = Inc.run inc Effect.done'
+        Inc (fun k -> loop [] k effect)
+
+    /// Console log effect handler. Actual side-effects!
+    let rec consoleLogHandler<'U, 'S, 'A when 'U :> Log<'S>> (inc : Inc<'U, 'A>) : Inc<'U, _> =
+
+        let rec loop k (effect : Effect) =
+            match effect with
+                | :? LogEntry<'S> as logEntry ->
+                    printfn "Log: %A" logEntry.Value
+                    loop k (logEntry.K ())
+                | :? Done<'A> as done' ->
+                    k done'.Value
+                | _ ->
+                    effect.UnPack
+                        {
+                            new Lambda with
+                                member self.Invoke(k') =
+                                    fun x -> loop k (k' x)
+                        }
+
+        let effect = Inc.run inc Effect.done'
+        Inc (fun k -> loop k effect)
+
+    /// Logs an item.
+    let log<'U, 'S when 'U :> Log<'S>> (s : 'S) : Inc<'U, _> =
+        Inc (fun k -> LogEntry<'S>(s, k) :> _)
+
+    /// Logs a formatted string.
+    let logf fmt =
+        Printf.ksprintf log fmt

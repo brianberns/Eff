@@ -32,7 +32,7 @@ module State =
                     effect.UnPack
                         {
                             new Lambda with
-                                member self.Invoke<'X>(k' : 'X -> Effect) =
+                                member self.Invoke(k') =
                                     fun x -> loop k state (k' x)
                         }
 
@@ -41,8 +41,8 @@ module State =
 
     /// Sets the current state.
     let put<'U, 'S when 'U :> State<'S>> (s : 'S) : Inc<'U, unit> =
-        Inc (fun k -> new Put<'S>(s, k) :> _)
+        Inc (fun k -> Put<'S>(s, k) :> _)
 
     /// Gets the current state.
     let get<'U, 'S when 'U :> State<'S>> () : Inc<'U, 'S> =
-        Inc (fun k -> new Get<'S>(k) :> _)
+        Inc (fun k -> Get<'S>(k) :> _)
