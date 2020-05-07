@@ -131,6 +131,72 @@ module LogTest =
             |> Log.consoleLogHandler
             |> Effect.run // printf side-effect: Log: "Test 1"\n Log: "Test 2"\n
 
+/// http://kcsrk.info/ocaml/multicore/2015/05/20/effects-multicore/
+module ConcurrentTest =
+
+    let rec getComp id depth =
+        eff {
+            do! Log.logf "Starting number %d!" id
+            if depth > 0 then 
+                do! Log.logf "Forking number %d!" (id * 2 + 1)
+                do! Concurrent.fork <| getComp (id * 2 + 1) (depth - 1)
+                do! Log.logf "Forking number %d!" (id * 2 + 2)
+                do! Concurrent.fork <| getComp (id * 2 + 2) (depth - 1)
+            else 
+                do! Log.logf "Yielding in number %d!" id
+                do! Concurrent.yield' ()
+                do! Log.logf "Resumed number %d!" id
+            do! Log.logf "Finishing number %d!" id
+        }
+
+    type CombinedEffect =
+        inherit Log<string>
+        inherit Concur
+
+    let run () =
+
+        let comp = getComp 0 2
+        let x =
+            comp
+                |> Concurrent.sequentialHandler<CombinedEffect, _, _>
+                |> Effect.run
+        printfn "%A" x
+
+        let x =
+            comp
+                |> Concurrent.threadPoolHandler<CombinedEffect, _, _>
+                |> Effect.run
+        printfn "%A" x
+
+/// http://math.andrej.com/2011/12/06/how-to-make-the-impossible-functionals-run-even-faster/
+module SearcherTest =
+
+    let findNeighborhood (p : (int -> Inc<'U, bool>) -> Inc<'U, bool>) : Inc<'U, bool> =
+        p (fun n -> Searcher.search n)
+
+    let epsilon p n = 
+        eff {
+            let! (_, s) = findNeighborhood p |> Searcher.findNeighborhoodHandler
+            return s
+                |> List.tryFind (fun (n', b) -> n = n')
+                |> Option.map snd
+                |> Option.defaultValue true
+        }
+
+    let exists p = p (epsilon p)
+
+    let run () =
+        let f () =
+            epsilon (fun f ->
+                eff {
+                    let! x = f 10
+                    let! y = f 11
+                    return x <> y
+                })
+        let x =
+            [ for i in [0..20] -> Effect.run <| f () i ] 
+        printfn "%A" x
+
 [<EntryPoint>]
 let main argv =
     StateTest.run ()
@@ -139,4 +205,6 @@ let main argv =
     NonDetTest.run ()
     StateNonDetTest.run ()
     LogTest.run ()
+    ConcurrentTest.run ()
+    SearcherTest.run ()
     0

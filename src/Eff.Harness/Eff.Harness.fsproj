@@ -48,7 +48,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <Content Include="packages.config" />
-    <None Include="Script.fsx" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
