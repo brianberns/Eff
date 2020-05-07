@@ -3,7 +3,7 @@
 // basic operation
 type Search<'S>(v : 'S, k : bool -> Effect) =
     interface Effect with
-        member self.UnPack(lambda : Lambda) : Effect =
+        member self.UnPack(lambda) : Effect =
                 new Search<'S>(v, lambda.Invoke<bool> k) :> _
     member self.Value = v
     member self.K = k

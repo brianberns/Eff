@@ -6,7 +6,7 @@ type Log<'S> = inherit Effect
 /// Log entry effect.
 type LogEntry<'S>(v : 'S, k : unit -> Effect) =
     interface Log<'S> with
-        member self.UnPack(lambda : Lambda) =
+        member self.UnPack(lambda) =
             LogEntry(v, lambda.Invoke<unit> k) :> _
     member self.Value = v
     member self.K = k

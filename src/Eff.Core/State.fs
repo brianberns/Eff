@@ -6,7 +6,7 @@ type State<'S> = inherit Effect
 /// Put effect.
 type Put<'S>(v : 'S, k : unit -> Effect) =
     interface State<'S> with
-        member self.UnPack(lambda : Lambda) =
+        member self.UnPack(lambda) =
             Put(v, lambda.Invoke(k)) :> _
     member self.Value = v
     member self.K = k
@@ -14,7 +14,7 @@ type Put<'S>(v : 'S, k : unit -> Effect) =
 /// Get effect.
 type Get<'S>(k : 'S -> Effect) =
     interface State<'S> with
-        member self.UnPack(lambda : Lambda) =             
+        member self.UnPack(lambda) =             
             Get(lambda.Invoke(k)) :> _
     member self.K = k
 

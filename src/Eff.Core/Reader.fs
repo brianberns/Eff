@@ -6,7 +6,7 @@ type Reader<'E> = inherit Effect
 /// Ask effect.
 type Ask<'E>(k : 'E -> _) =
     interface Reader<'E> with
-        member self.UnPack(lambda : Lambda) =
+        member self.UnPack(lambda) =
             Ask(lambda.Invoke(k)) :> _
     member self.K = k
 

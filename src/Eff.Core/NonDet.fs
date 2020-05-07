@@ -13,7 +13,7 @@ and Choose<'T>(first : 'T, second : 'T, k : 'T -> _) =
     interface NonDetEffect with
         override self.Invoke unpack = 
             unpack.Invoke(first, second, k)
-        override self.UnPack(lambda : Lambda) =
+        override self.UnPack(lambda) =
             Choose(first, second, lambda.Invoke(k)) :> _
 
 /// Fail effect.
@@ -21,7 +21,7 @@ and Fail(k : unit -> _) =
     interface NonDetEffect with
         override self.Invoke unpack = 
             unpack.Invoke(k)
-        override self.UnPack(lambda : Lambda) =
+        override self.UnPack(lambda) =
             Fail(lambda.Invoke(k)) :> _
     
 module NonDet =

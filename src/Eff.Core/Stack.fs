@@ -26,7 +26,7 @@ type Stack<'S> = inherit Effect
 /// Push effect.
 type Push<'S>(v : 'S, k : unit -> _) =
     interface Stack<'S> with
-        member self.UnPack(lambda : Lambda) =
+        member self.UnPack(lambda) =
             Push(v, lambda.Invoke(k)) :> _
     member self.Value = v
     member self.K = k
@@ -34,7 +34,7 @@ type Push<'S>(v : 'S, k : unit -> _) =
 /// Pop effect.
 type Pop<'S>(k : 'S -> _) =
     interface Stack<'S> with
-        member self.UnPack(lambda : Lambda) =
+        member self.UnPack(lambda) =
             Pop(lambda.Invoke(k)) :> _
     member self.K = k
 

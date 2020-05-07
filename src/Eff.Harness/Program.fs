@@ -186,7 +186,7 @@ module ConcurrentTest =
         comp
             |> Concurrent.threadPoolHandler<CombinedEffect, _, _>
             |> Effect.run
-        System.Threading.Thread.Sleep(100)
+        System.Threading.Thread.Sleep(500)
 
 /// http://math.andrej.com/2011/12/06/how-to-make-the-impossible-functionals-run-even-faster/
 module SearcherTest =
