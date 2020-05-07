@@ -40,7 +40,7 @@ type Pop<'S>(k : 'S -> _) =
 
 module Stack =
 
-    let rec stackHandler<'S, 'A> (stack : Eff.Collections.Stack<'S>) (Inc inc : Inc<Stack<'S>, 'A>) =
+    let rec stackHandler<'S, 'A> (stack : Eff.Collections.Stack<'S>) (inc : Inc<Stack<'S>, 'A>) =
         
         let rec loop k stack (effect : Effect) =
             match effect with
@@ -60,7 +60,7 @@ module Stack =
                                     fun x -> loop k stack (k' x)
                         }
 
-        let effect = inc Effect.done'
+        let effect = Inc.run inc Effect.done'
         Inc (fun k -> loop k stack effect)
 
     /// Pushes a value on the stack.

@@ -33,7 +33,7 @@ module NonDet =
     // non-determinism effect handlers
     let nonDetHandler<'U, 'A when 'U :> NonDetEffect> 
         : Inc<'U, 'A> -> Inc<'U, list<'A>> = 
-        fun eff ->
+        fun inc ->
             let rec loop : (list<'A> -> Effect) -> Effect -> Effect =
                 fun k effect -> 
                     match effect with
@@ -50,6 +50,5 @@ module NonDet =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop k (k' x)
                     }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop k effect)

@@ -16,8 +16,10 @@ type Inc<'U, 'A when 'U :> Effect> =
 
 module Inc =
 
-    let run (Inc inc) cont =
-        inc cont
+    /// Extracts an effect from  the given incomplete computation
+    /// using the given continuation.
+    let run (Inc f) cont =
+        f cont
 
 /// An effect that wraps the given value.
 type Done<'A>(v : 'A) =

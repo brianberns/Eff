@@ -22,7 +22,7 @@ module Log =
     // log effect handlers
     let rec pureLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
         : Inc<'U, 'A> -> Inc<'U, 'A * list<'S>> = 
-        fun eff ->
+        fun inc ->
             let rec loop : list<'S> -> (('A * list<'S>) -> Effect) -> Effect -> Effect = 
                 fun s k effect ->
                     match effect with
@@ -35,13 +35,12 @@ module Log =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop s k (k' x)
                         }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop [] k effect)
 
     let rec consoleLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
         : Inc<'U, 'A> -> Inc<'U, 'A> = 
-        fun eff ->
+        fun inc ->
             let rec loop : ('A -> Effect) -> Effect -> Effect = 
                 fun k effect ->
                     match effect with
@@ -53,9 +52,5 @@ module Log =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop k (k' x)
                     }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop k effect)
-
-
-       

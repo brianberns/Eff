@@ -17,7 +17,7 @@ module Searcher =
     // effect handlers
     let rec findNeighborhoodHandler<'U when 'U :> Search<int>> 
         : Inc<'U, bool> -> Inc<'U, bool * list<int * bool>> = 
-        fun eff -> 
+        fun inc -> 
             let rec loop : list<int * bool> -> (bool * list<int * bool> -> Effect) -> Effect -> Effect = 
                 fun s k effect -> 
                     match effect with
@@ -34,6 +34,5 @@ module Searcher =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop s k (k' x)
                     }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop [] k effect)

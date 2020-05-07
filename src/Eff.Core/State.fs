@@ -21,7 +21,7 @@ type Get<'S>(k : 'S -> Effect) =
 module State = 
 
     /// State effect handler.
-    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (Inc inc : Inc<'U, 'A>) : Inc<'U, 'A> =
+    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (inc : Inc<'U, 'A>) : Inc<'U, 'A> =
 
         let rec loop k state (effect : Effect) =
             match effect with
@@ -36,7 +36,7 @@ module State =
                                     fun x -> loop k state (k' x)
                         }
 
-        let effect = inc Effect.done'
+        let effect = Inc.run inc Effect.done'
         Inc (fun k -> loop k state effect)
 
     /// Sets the current state.

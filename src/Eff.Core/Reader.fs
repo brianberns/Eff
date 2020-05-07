@@ -14,7 +14,7 @@ module Reader =
 
     let rec readerHandler<'U, 'E, 'A when 'U :> Reader<'E>> 
         : 'E -> Inc<'U, 'A> -> Inc<'U, 'A> = 
-        fun env eff ->
+        fun env inc ->
             let rec loop : ('A -> Effect) -> 'E -> Effect -> Effect = fun k env effect ->
                 match effect with
                 | :? Ask<'E> as ask -> loop k env (ask.K env) 
@@ -24,6 +24,5 @@ module Reader =
                         member self.Invoke<'X> (k' : 'X -> Effect) = 
                             fun x -> loop k env (k' x)
                 }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop k env effect)

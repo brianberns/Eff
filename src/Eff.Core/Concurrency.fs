@@ -25,7 +25,7 @@ module Concurrent =
 
     // concurrency helper functions
     let fork<'U when 'U :> Concur> : Inc<'U, unit> -> Inc<'U, unit> =  
-        fun eff -> Inc (fun k -> let (Inc inc) = eff in new Fork(inc k, k) :> _)
+        fun inc -> Inc (fun k -> Fork(Inc.run inc k, k) :> _)
 
     let yield'<'U when 'U :> Concur>() : Inc<'U, unit> = 
         Inc (fun k -> new Yield(k) :> _)
@@ -33,7 +33,7 @@ module Concurrent =
     // concurrency effect handlers
     let rec sequentialHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> 
         : Inc<'U, 'A> -> Inc<'U, 'A * list<'S>> = 
-        fun eff -> 
+        fun inc -> 
             let rec loop : list<'S> -> Queue<unit -> Effect> -> ('A * list<'S> -> Effect) -> Effect -> Effect =
                 fun s queue k effect -> 
                     match effect with
@@ -58,13 +58,12 @@ module Concurrent =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop s queue k (k' x)
                         }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop [] (new Queue<_>()) k effect)
 
     let rec threadPoolHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> 
         : Inc<'U, 'A> -> Inc<'U, 'A> = 
-        fun eff -> 
+        fun inc -> 
             let rec loop : ('T -> Effect) -> Effect -> Effect = 
                 fun k effect ->
                     match effect with
@@ -82,6 +81,5 @@ module Concurrent =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop k (k' x)
                         }
-            let (Inc inc) = eff
-            let effect = inc Effect.done'
+            let effect = Inc.run inc Effect.done'
             Inc (fun k -> loop k effect)
