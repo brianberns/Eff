@@ -218,6 +218,7 @@ module SearcherTest =
         for i = 0 to 20 do
             let x = Effect.run <| f i
             printfn "%d: %A" i x
+            assert(x <> (i = 11))
 
 [<EntryPoint>]
 let main argv =
