@@ -33,8 +33,8 @@ type EffBuilder() =
         eff
 
     /// Combines two independent computations.
-    member self.Combine(first : Eff<'U, 'A>, second : Eff<'U, unit>) : Eff<'U, unit> =
-        self.Bind(first, fun _ -> second)
+    member self.Combine(first : Eff<'U, unit>, second : Eff<'U, 'A>) : Eff<'U, 'A> =
+        self.Bind(first, fun () -> second)
 
     /// Unit computation.
     member self.Zero() : Eff<'U, unit> =
@@ -66,7 +66,9 @@ module Eff =
 
     /// Extracts a value from the given incomplete computation.
     let rec run<'U, 'A when 'U :> Effect> (Eff inc : Eff<'U, 'A>) : 'A =
-        (inc done' :?> Done<_>).Value
+        match inc done' with
+            | :? Done<'A> as dn -> dn.Value
+            | effect -> failwithf "Unhandled effect %A" effect
 
     /// Workflow builder.
     let eff = new EffBuilder()

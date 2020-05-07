@@ -1,29 +1,31 @@
-﻿namespace Eff.Core
+﻿namespace Eff.Collections
 
-/// Immutable stack.
-type Stack<'t> = private Stack of List<'t>
+    /// Immutable stack.
+    type Stack<'t> = private Stack of List<'t>
 
-/// Stack operations.
-module Stack =
+    /// Stack operations.
+    module Stack =
 
-    /// Creates a stack.
-    let ofList list = Stack list
+        /// Creates a stack.
+        let ofList list = Stack list
 
-    /// Pushes an item on the stack.
-    let push item (Stack items) =
-        Stack (item :: items)
+        /// Pushes an item on the stack.
+        let push item (Stack items) =
+            Stack (item :: items)
 
-    /// Pops the top of the stack.
-    let pop = function
-        | Stack (head :: tail) -> head, Stack tail
-        | Stack [] -> failwith "Empty stack"
+        /// Pops the top of the stack.
+        let pop = function
+            | Stack (head :: tail) -> head, Stack tail
+            | Stack [] -> failwith "Empty stack"
+
+namespace Eff.Core
 
 /// Stack effect base.
-type StackEffect<'S> = inherit Effect
+type Stack<'S> = inherit Effect
 
 /// Push effect.
 type Push<'S>(v : 'S, k : unit -> _) =
-    interface StackEffect<'S> with
+    interface Stack<'S> with
         member self.UnPack(lambda : Lambda) : Effect =
             Push(v, lambda.Invoke(k)) :> _
     member self.Value = v
@@ -36,18 +38,18 @@ type Pop<'S>(k : 'S -> _) =
             Pop(lambda.Invoke(k)) :> _
     member self.K = k
 
-module StackEffect = 
+module Stack =
 
-    let rec stackHandler<'S, 'A> (stack : Stack<'S>) (Eff inc : Eff<StackEffect<'S>, 'A>) =
+    let rec stackHandler<'S, 'A> (stack : Eff.Collections.Stack<'S>) (Eff inc : Eff<Stack<'S>, 'A>) =
         
         let rec loop k stack (effect : Effect) =
             match effect with
-                | :? Get<'S> as get ->
-                    let value, stack' = Stack.pop stack
-                    loop k stack' (get.K value)
-                | :? Put<'S> as put ->
-                    let stack' = Stack.push put.Value stack
-                    loop k stack' (put.K ())
+                | :? Push<'S> as push ->
+                    let stack' = Eff.Collections.Stack.push push.Value stack
+                    loop k stack' (push.K ())
+                | :? Pop<'S> as pop ->
+                    let value, stack' = Eff.Collections.Stack.pop stack
+                    loop k stack' (pop.K value)
                 | :? Done<'A> as done' ->
                     k (stack, done'.Value)
                 | _ ->
@@ -62,9 +64,9 @@ module StackEffect =
         Eff (fun k -> loop k stack effect)
 
     /// Pushes a value on the stack.
-    let push<'S> (s : 'S) : Eff<StackEffect<'S>, unit> =
+    let push<'S> (s : 'S) : Eff<Stack<'S>, unit> =
         shift (fun k -> new Push<'S>(s, k) :> _)
 
     /// Pops a value from the stack.
-    let pop<'S>() : Eff<StackEffect<'S>, 'S> =
-        shift (fun k -> new Get<'S>(k) :> _)
+    let pop<'S>() : Eff<Stack<'S>, 'S> =
+        shift (fun k -> new Pop<'S>(k) :> _)
