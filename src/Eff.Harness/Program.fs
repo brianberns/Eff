@@ -208,16 +208,16 @@ module SearcherTest =
     let run () =
         printfn ""
         printfn "Searcher test:"
-        let f () =
+        let f =
             epsilon (fun f ->
                 eff {
                     let! x = f 10
                     let! y = f 11
                     return x <> y
                 })
-        let x =
-            [ for i in [0..20] -> Effect.run <| f () i ] 
-        printfn "%A" x
+        for i = 0 to 20 do
+            let x = Effect.run <| f i
+            printfn "%d: %A" i x
 
 [<EntryPoint>]
 let main argv =

@@ -22,7 +22,7 @@ module Concurrent =
 
     open System.Collections.Generic
 
-    /// Sequential concurrency effect handler
+    /// Sequential concurrency effect handler.
     let rec sequentialHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> (inc : Inc<'U, 'A>) : Inc<'U, _> =
 
         let rec loop log (queue : Queue<_>) k (effect : Effect) =
