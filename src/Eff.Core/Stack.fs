@@ -26,21 +26,22 @@ type Stack<'S> = inherit Effect
 /// Push effect.
 type Push<'S>(v : 'S, k : unit -> _) =
     interface Stack<'S> with
-        member self.UnPack(lambda : Lambda) : Effect =
+        member self.UnPack(lambda : Lambda) =
             Push(v, lambda.Invoke(k)) :> _
     member self.Value = v
     member self.K = k
 
 /// Pop effect.
 type Pop<'S>(k : 'S -> _) =
-    interface State<'S> with
-        member self.UnPack(lambda : Lambda) : Effect =             
+    interface Stack<'S> with
+        member self.UnPack(lambda : Lambda) =
             Pop(lambda.Invoke(k)) :> _
     member self.K = k
 
 module Stack =
 
-    let rec stackHandler<'S, 'A> (stack : Eff.Collections.Stack<'S>) (inc : Inc<Stack<'S>, 'A>) =
+    /// Stack effect handler.
+    let rec stackHandler<'U, 'S, 'A when 'U :> Stack<'S>> stack (inc : Inc<'U, 'A>) : Inc<'U, _> =
         
         let rec loop k stack (effect : Effect) =
             match effect with
@@ -56,7 +57,7 @@ module Stack =
                     effect.UnPack
                         {
                             new Lambda with
-                                member self.Invoke<'X> (k' : 'X -> Effect) = 
+                                member self.Invoke(k') =
                                     fun x -> loop k stack (k' x)
                         }
 
@@ -64,9 +65,9 @@ module Stack =
         Inc (fun k -> loop k stack effect)
 
     /// Pushes a value on the stack.
-    let push<'S> (s : 'S) : Inc<Stack<'S>, unit> =
+    let push<'U, 'S when 'U :> Stack<'S>> (s : 'S) : Inc<'U, _> =
         Inc (fun k -> new Push<'S>(s, k) :> _)
 
     /// Pops a value from the stack.
-    let pop<'S>() : Inc<Stack<'S>, 'S> =
+    let pop<'U, 'S when 'U :> Stack<'S>> () : Inc<'U, _> =
         Inc (fun k -> new Pop<'S>(k) :> _)

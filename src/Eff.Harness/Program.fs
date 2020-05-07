@@ -21,7 +21,7 @@ module StackTest =
 
     let run () =
 
-        let comp : Inc<Stack<int>, int> =
+        let comp =
             eff {
                 let! a = Stack.pop ()
                 if a = 5 then
@@ -29,12 +29,12 @@ module StackTest =
                 else
                     do! Stack.push 3
                     do! Stack.push 8
-                return a
+                return a.ToString()
             }
 
         let stack = Eff.Collections.Stack.ofList [9; 0; 2; 1; 0]
         let x = comp |> Stack.stackHandler stack |> Effect.run
-        assert(x = (Eff.Collections.Stack.ofList [8; 3; 0; 2; 1; 0], 9))
+        assert(x = (Eff.Collections.Stack.ofList [8; 3; 0; 2; 1; 0], "9"))
         printfn "%A" x
 
 /// Combine State and Reader effects.

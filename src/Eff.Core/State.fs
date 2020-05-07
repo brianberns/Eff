@@ -6,22 +6,22 @@ type State<'S> = inherit Effect
 /// Put effect.
 type Put<'S>(v : 'S, k : unit -> Effect) =
     interface State<'S> with
-        member self.UnPack(lambda : Lambda) : Effect =
-            Put<'S>(v, lambda.Invoke(k)) :> _
+        member self.UnPack(lambda : Lambda) =
+            Put(v, lambda.Invoke(k)) :> _
     member self.Value = v
     member self.K = k
 
 /// Get effect.
 type Get<'S>(k : 'S -> Effect) =
     interface State<'S> with
-        member self.UnPack(lambda : Lambda) : Effect =             
-            Get<'S>(lambda.Invoke(k)) :> _
+        member self.UnPack(lambda : Lambda) =             
+            Get(lambda.Invoke(k)) :> _
     member self.K = k
 
 module State = 
 
     /// State effect handler.
-    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (inc : Inc<'U, 'A>) : Inc<'U, 'S * 'A> =
+    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (inc : Inc<'U, 'A>) : Inc<'U, _> =
 
         let rec loop k state (effect : Effect) =
             match effect with
@@ -32,7 +32,7 @@ module State =
                     effect.UnPack
                         {
                             new Lambda with
-                                member self.Invoke<'X> (k' : 'X -> Effect) = 
+                                member self.Invoke<'X>(k' : 'X -> Effect) =
                                     fun x -> loop k state (k' x)
                         }
 

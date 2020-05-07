@@ -1,28 +1,35 @@
 ﻿namespace Eff.Core
 
+/// Reader effect base.
 type Reader<'E> = inherit Effect
+
+/// Ask effect.
 type Ask<'E>(k : 'E -> Effect) =
     interface Reader<'E> with
-        member self.UnPack(lambda : Lambda) : Effect =
-                new Ask<'E>(lambda.Invoke<'E> k) :> _
+        member self.UnPack(lambda : Lambda) =
+            Ask(lambda.Invoke(k)) :> _
     member self.K = k
 
 module Reader = 
 
-    let ask<'U, 'E when 'U :> Reader<'E>>() : Inc<'U, 'E> = 
-        Inc (fun k -> new Ask<'E>(k) :> _)
+    /// Reader effect handler.
+    let rec readerHandler<'U, 'E, 'A when 'U :> Reader<'E>> env (inc : Inc<'U, 'A>) : Inc<'U, _> =
 
-    let rec readerHandler<'U, 'E, 'A when 'U :> Reader<'E>> 
-        : 'E -> Inc<'U, 'A> -> Inc<'U, 'A> = 
-        fun env inc ->
-            let rec loop : ('A -> Effect) -> 'E -> Effect -> Effect = fun k env effect ->
-                match effect with
+        let rec loop k env (effect : Effect) =
+            match effect with
                 | :? Ask<'E> as ask -> loop k env (ask.K env) 
                 | :? Done<'A> as done' -> k done'.Value
-                | _ -> effect.UnPack {
-                    new Lambda with
-                        member self.Invoke<'X> (k' : 'X -> Effect) = 
-                            fun x -> loop k env (k' x)
-                }
-            let effect = Inc.run inc Effect.done'
-            Inc (fun k -> loop k env effect)
+                | _ ->
+                    effect.UnPack
+                        {
+                            new Lambda with
+                                member self.Invoke<'X>(k' : 'X -> Effect) =
+                                    fun x -> loop k env (k' x)
+                        }
+
+        let effect = Inc.run inc Effect.done'
+        Inc (fun k -> loop k env effect)
+
+    /// Reads the current environment.
+    let ask<'U, 'E when 'U :> Reader<'E>>() : Inc<'U, 'E> = 
+        Inc (fun k -> Ask<'E>(k) :> _)
