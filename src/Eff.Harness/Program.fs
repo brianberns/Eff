@@ -14,8 +14,8 @@ module StateTest =
             } 
 
         let x = comp |> State.stateHandler 1 |> Effect.run
-        assert(x = (4, 4))
         printfn "%A" x
+        assert(x = (4, 4))
 
 module StackTest =
 
@@ -59,8 +59,8 @@ module StateReaderTest =
                 |> State.stateHandler<CombinedEffect, _, _> 0
                 |> Reader.readerHandler 1
                 |> Effect.run
-        assert(x = (1, 2))
         printfn "%A" x
+        assert(x = (1, 2))
 
 module NonDetTest =
 
@@ -77,8 +77,8 @@ module NonDetTest =
             comp
                 |> NonDet.nonDetHandler
                 |> Effect.run
-        assert(x = [(1, "1"); (1, "2"); (2, "1"); (2, "2")])
         printfn "%A" x
+        assert(x = [(1, "1"); (1, "2"); (2, "1"); (2, "2")])
 
 module StateNonDetTest =
 
@@ -100,6 +100,7 @@ module StateNonDetTest =
                 |> State.stateHandler<CombinedEffect, _, _> 1
                 |> NonDet.nonDetHandler
                 |> Effect.run
+        printfn "%A" x
         assert(
             x =
                 [
@@ -108,7 +109,27 @@ module StateNonDetTest =
                     1, (2, "1")
                     1, (2, "2")
                 ])
+
+module LogTest =
+
+    let getComp n = 
+        eff {
+            do! Log.logf "Test %d" n
+            do! Log.logf "Test %d" (n + 1)
+        }
+
+    let run () =
+
+        let x =
+            getComp 1
+                |> Log.pureLogHandler
+                |> Effect.run
         printfn "%A" x
+        assert(x = ((), ["Test 2"; "Test 1"]))
+
+        getComp 1
+            |> Log.consoleLogHandler
+            |> Effect.run // printf side-effect: Log: "Test 1"\n Log: "Test 2"\n
 
 [<EntryPoint>]
 let main argv =
@@ -117,4 +138,5 @@ let main argv =
     StateReaderTest.run ()
     NonDetTest.run ()
     StateNonDetTest.run ()
+    LogTest.run ()
     0
