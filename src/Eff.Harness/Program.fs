@@ -13,6 +13,8 @@ module StateTest =
                 return! State.get ()
             } 
 
+        printfn ""
+        printfn "State test:"
         let x = comp |> State.stateHandler 1 |> Effect.run
         printfn "%A" x
         assert(x = (4, 4))
@@ -32,6 +34,8 @@ module StackTest =
                 return a.ToString()
             }
 
+        printfn ""
+        printfn "Stack test:"
         let stack = Eff.Collections.Stack.ofList [9; 0; 2; 1; 0]
         let x = comp |> Stack.stackHandler stack |> Effect.run
         assert(x = (Eff.Collections.Stack.ofList [8; 3; 0; 2; 1; 0], "9"))
@@ -54,6 +58,8 @@ module StateReaderTest =
 
     let run () =
 
+        printfn ""
+        printfn "State/Reader test:"
         let x =
             getComp ()
                 |> State.stateHandler<CombinedEffect, _, _> 0
@@ -69,10 +75,15 @@ module NonDetTest =
         let comp = 
             eff {
                 let! x = NonDet.choose (1, 2)
+                let! x = NonDet.choose (x, 3)
+                if x = 3 then
+                    do! NonDet.fail ()
                 let! y = NonDet.choose ("1", "2")
                 return (x, y)
             }
 
+        printfn ""
+        printfn "Non-determinisim test:"
         let x =
             comp
                 |> NonDet.nonDetHandler
@@ -95,6 +106,8 @@ module StateNonDetTest =
         inherit NonDetEffect
 
     let run () =
+        printfn ""
+        printfn "State/Non-determinism test:"
         let x =
             getComp ()
                 |> State.stateHandler<CombinedEffect, _, _> 1
@@ -120,6 +133,8 @@ module LogTest =
 
     let run () =
 
+        printfn ""
+        printfn "Pure log test:"
         let x =
             getComp 1
                 |> Log.pureLogHandler
@@ -127,6 +142,8 @@ module LogTest =
         printfn "%A" x
         assert(x = ((), ["Test 2"; "Test 1"]))
 
+        printfn ""
+        printfn "Console log test:"
         getComp 1
             |> Log.consoleLogHandler
             |> Effect.run // printf side-effect: Log: "Test 1"\n Log: "Test 2"\n
@@ -155,6 +172,8 @@ module ConcurrentTest =
 
     let run () =
 
+        printfn ""
+        printfn "Sequential concurrency test:"
         let comp = getComp 0 2
         let x =
             comp
@@ -162,11 +181,12 @@ module ConcurrentTest =
                 |> Effect.run
         printfn "%A" x
 
-        let x =
-            comp
-                |> Concurrent.threadPoolHandler<CombinedEffect, _, _>
-                |> Effect.run
-        printfn "%A" x
+        printfn ""
+        printfn "Parallel concurrency test:"
+        comp
+            |> Concurrent.threadPoolHandler<CombinedEffect, _, _>
+            |> Effect.run
+        System.Threading.Thread.Sleep(100)
 
 /// http://math.andrej.com/2011/12/06/how-to-make-the-impossible-functionals-run-even-faster/
 module SearcherTest =
@@ -186,6 +206,8 @@ module SearcherTest =
     let exists p = p (epsilon p)
 
     let run () =
+        printfn ""
+        printfn "Searcher test:"
         let f () =
             epsilon (fun f ->
                 eff {
