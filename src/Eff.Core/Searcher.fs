@@ -11,12 +11,12 @@ type Search<'S>(v : 'S, k : bool -> Effect) =
 module Searcher = 
 
     // helper functions
-    let search<'U, 'S when 'U :> Search<'S>> : 'S -> Eff<'U, bool> =
-        fun v -> Effect.shift (fun k -> new Search<'S>(v, k) :> _)
+    let search<'U, 'S when 'U :> Search<'S>> : 'S -> Inc<'U, bool> =
+        fun v -> Inc (fun k -> new Search<'S>(v, k) :> _)
 
     // effect handlers
     let rec findNeighborhoodHandler<'U when 'U :> Search<int>> 
-        : Eff<'U, bool> -> Eff<'U, bool * list<int * bool>> = 
+        : Inc<'U, bool> -> Inc<'U, bool * list<int * bool>> = 
         fun eff -> 
             let rec loop : list<int * bool> -> (bool * list<int * bool> -> Effect) -> Effect -> Effect = 
                 fun s k effect -> 
@@ -34,6 +34,6 @@ module Searcher =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop s k (k' x)
                     }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop [] k effect)
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop [] k effect)

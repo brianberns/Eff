@@ -16,7 +16,7 @@ let testState () =
 
 let testStack () =
 
-    let comp : Eff<Stack<int>, int> =
+    let comp : Inc<Stack<int>, int> =
         eff {
             let! a = Stack.pop ()
             if a = 5 then
@@ -31,8 +31,32 @@ let testStack () =
     let x = comp |> Stack.stackHandler stack |> Effect.run   // (Stack [8; 3; 0; 2; 1; 0], 9)
     printfn "%A" x
 
+
+type CombinedEffect =
+    inherit State<int>
+    inherit Reader<int>
+
+/// Combine State and Reader effects.
+let testCombined () =
+
+    let comp =
+        eff {
+            do! State.put 1
+            let! y = Reader.ask ()
+            let! x = State.get ()
+            return x + y
+        }
+
+    let x =
+        comp
+            |> State.stateHandler<CombinedEffect, _, _> 0
+            |> Reader.readerHandler 1
+            |> Effect.run // (1, 2)
+    printfn "%A" x
+
 [<EntryPoint>]
 let main argv =
     testState ()
     testStack ()
+    testCombined ()
     0

@@ -24,15 +24,15 @@ and Fail(k : unit -> Effect) =
 module NonDet = 
     
     // non-determinism helper functions
-    let choose<'T, 'U when 'U :> NonDetEffect> (first : 'T, second : 'T) : Eff<'U, 'T> = 
-        Effect.shift (fun k -> new Choose<'T>(first, second, k) :> _)
+    let choose<'T, 'U when 'U :> NonDetEffect> (first : 'T, second : 'T) : Inc<'U, 'T> = 
+        Inc (fun k -> new Choose<'T>(first, second, k) :> _)
 
-    let fail<'U when 'U :> NonDetEffect> () : Eff<'U, unit> = 
-        Effect.shift (fun k -> new Fail(k) :> _)
+    let fail<'U when 'U :> NonDetEffect> () : Inc<'U, unit> = 
+        Inc (fun k -> new Fail(k) :> _)
 
     // non-determinism effect handlers
     let nonDetHandler<'U, 'A when 'U :> NonDetEffect> 
-        : Eff<'U, 'A> -> Eff<'U, list<'A>> = 
+        : Inc<'U, 'A> -> Inc<'U, list<'A>> = 
         fun eff ->
             let rec loop : (list<'A> -> Effect) -> Effect -> Effect =
                 fun k effect -> 
@@ -50,7 +50,6 @@ module NonDet =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop k (k' x)
                     }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop k effect)
-
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop k effect)

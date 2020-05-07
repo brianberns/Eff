@@ -24,16 +24,15 @@ type Yield(k : unit -> Effect) =
 module Concurrent = 
 
     // concurrency helper functions
-    let fork<'U when 'U :> Concur> : Eff<'U, unit> -> Eff<'U, unit> =  
-        fun eff -> Effect.shift (fun k -> let (Eff cont) = eff in new Fork(cont k, k) :> _)
+    let fork<'U when 'U :> Concur> : Inc<'U, unit> -> Inc<'U, unit> =  
+        fun eff -> Inc (fun k -> let (Inc inc) = eff in new Fork(inc k, k) :> _)
 
-    let yield'<'U when 'U :> Concur>() : Eff<'U, unit> = 
-        Effect.shift (fun k -> new Yield(k) :> _)
-
+    let yield'<'U when 'U :> Concur>() : Inc<'U, unit> = 
+        Inc (fun k -> new Yield(k) :> _)
 
     // concurrency effect handlers
     let rec sequentialHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> 
-        : Eff<'U, 'A> -> Eff<'U, 'A * list<'S>> = 
+        : Inc<'U, 'A> -> Inc<'U, 'A * list<'S>> = 
         fun eff -> 
             let rec loop : list<'S> -> Queue<unit -> Effect> -> ('A * list<'S> -> Effect) -> Effect -> Effect =
                 fun s queue k effect -> 
@@ -59,12 +58,12 @@ module Concurrent =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop s queue k (k' x)
                         }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop [] (new Queue<_>()) k effect)
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop [] (new Queue<_>()) k effect)
 
     let rec threadPoolHandler<'U, 'S, 'A when 'U :> Concur and 'U :> Log<'S>> 
-        : Eff<'U, 'A> -> Eff<'U, 'A> = 
+        : Inc<'U, 'A> -> Inc<'U, 'A> = 
         fun eff -> 
             let rec loop : ('T -> Effect) -> Effect -> Effect = 
                 fun k effect ->
@@ -83,8 +82,6 @@ module Concurrent =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop k (k' x)
                         }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop k effect)
-
-       
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop k effect)

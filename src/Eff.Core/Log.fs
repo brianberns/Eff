@@ -15,15 +15,13 @@ type LogEntry<'S>(v : 'S, k : unit -> Effect) =
 module Log = 
 
     // log helper functions
-    let log<'U, 'S when 'U :> Log<'S>> : 'S -> Eff<'U, unit> = 
-        fun s -> Effect.shift (fun k -> new LogEntry<'S>(s, k) :> _)
+    let log<'U, 'S when 'U :> Log<'S>> : 'S -> Inc<'U, unit> = 
+        fun s -> Inc (fun k -> new LogEntry<'S>(s, k) :> _)
     let logf fmt = Printf.ksprintf log fmt
-    
-
 
     // log effect handlers
     let rec pureLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
-        : Eff<'U, 'A> -> Eff<'U, 'A * list<'S>> = 
+        : Inc<'U, 'A> -> Inc<'U, 'A * list<'S>> = 
         fun eff ->
             let rec loop : list<'S> -> (('A * list<'S>) -> Effect) -> Effect -> Effect = 
                 fun s k effect ->
@@ -37,12 +35,12 @@ module Log =
                                 member self.Invoke<'X> (k' : 'X -> Effect) = 
                                     fun x -> loop s k (k' x)
                         }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop [] k effect)
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop [] k effect)
 
     let rec consoleLogHandler<'U, 'S, 'A when 'U :> Log<'S>> 
-        : Eff<'U, 'A> -> Eff<'U, 'A> = 
+        : Inc<'U, 'A> -> Inc<'U, 'A> = 
         fun eff ->
             let rec loop : ('A -> Effect) -> Effect -> Effect = 
                 fun k effect ->
@@ -55,9 +53,9 @@ module Log =
                             member self.Invoke<'X> (k' : 'X -> Effect) = 
                                 fun x -> loop k (k' x)
                     }
-            let (Eff effK) = eff
-            let effect = effK Effect.done'
-            Eff (fun k -> loop k effect)
+            let (Inc inc) = eff
+            let effect = inc Effect.done'
+            Inc (fun k -> loop k effect)
 
 
        

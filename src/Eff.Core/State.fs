@@ -21,7 +21,7 @@ type Get<'S>(k : 'S -> Effect) =
 module State = 
 
     /// State effect handler.
-    let rec stateHandler<'S, 'A> (state : 'S) (Eff inc : Eff<State<'S>, 'A>) =
+    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (Inc inc : Inc<'U, 'A>) : Inc<'U, 'A> =
 
         let rec loop k state (effect : Effect) =
             match effect with
@@ -37,12 +37,12 @@ module State =
                         }
 
         let effect = inc Effect.done'
-        Eff (fun k -> loop k state effect)
+        Inc (fun k -> loop k state effect)
 
     /// Sets the current state.
-    let put<'S> (s : 'S) : Eff<State<'S>, unit> =
-        Effect.shift (fun k -> new Put<'S>(s, k) :> _)
+    let put<'U, 'S when 'U :> State<'S>> (s : 'S) : Inc<'U, unit> =
+        Inc (fun k -> new Put<'S>(s, k) :> _)
 
     /// Gets the current state.
-    let get<'S>() : Eff<State<'S>, 'S> =
-        Effect.shift (fun k -> new Get<'S>(k) :> _)
+    let get<'U, 'S when 'U :> State<'S>> () : Inc<'U, 'S> =
+        Inc (fun k -> new Get<'S>(k) :> _)

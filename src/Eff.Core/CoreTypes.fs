@@ -11,8 +11,13 @@ and Lambda =
     abstract Invoke<'X> : ('X -> Effect) -> ('X -> Effect)
 
 /// An incomplete computation that returns an effect when given a continuation.
-type Eff<'U, 'A when 'U :> Effect> =
-    Eff of (('A -> Effect) -> Effect)
+type Inc<'U, 'A when 'U :> Effect> =
+    Inc of (('A -> Effect) -> Effect)
+
+module Inc =
+
+    let run (Inc inc) cont =
+        inc cont
 
 /// An effect that wraps the given value.
 type Done<'A>(v : 'A) =
@@ -27,13 +32,9 @@ module Effect =
     let done' (v : 'A) : Effect =
         Done(v) :> _
 
-    /// Wraps the given incomplete computation.
-    let shift (inc : ('A -> Effect) -> Effect) : Eff<'U, 'A> =
-        Eff inc
-
     /// Extracts a value from the given incomplete computation.
-    let rec run<'U, 'A when 'U :> Effect> (Eff inc : Eff<'U, 'A>) : 'A =
-        match inc done' with
+    let rec run<'U, 'A when 'U :> Effect> (inc : Inc<'U, 'A>) : 'A =
+        match Inc.run inc done' with
             | :? Done<'A> as dn -> dn.Value
             | effect -> failwithf "Unhandled effect %A" effect
 
@@ -41,33 +42,30 @@ module Effect =
 type EffBuilder() =
 
     /// Wraps the given value in an incomplete computation.
-    member self.Return<'U, 'A when 'U :> Effect>(v : 'A) : Eff<'U, 'A> =
-        Eff (fun k -> k v)
+    member self.Return<'U, 'A when 'U :> Effect>(v : 'A) : Inc<'U, 'A> =
+        Inc (fun k -> k v)
 
     /// Directly returns the given computation.
-    member self.ReturnFrom(eff : Eff<'U, 'A>) : Eff<'U, 'A> =
+    member self.ReturnFrom(eff : Inc<'U, 'A>) : Inc<'U, 'A> =
         eff
 
     /// Combines two independent computations.
-    member self.Combine(first : Eff<'U, unit>, second : Eff<'U, 'A>) : Eff<'U, 'A> =
+    member self.Combine(first : Inc<'U, unit>, second : Inc<'U, 'A>) : Inc<'U, 'A> =
         self.Bind(first, fun () -> second)
 
     /// Unit computation.
-    member self.Zero() : Eff<'U, unit> =
+    member self.Zero() : Inc<'U, unit> =
         self.Return(())
 
     /// Composition of incomplete computations.
-    member self.Bind<'U, 'A, 'B when 'U :> Effect>(Eff inc : Eff<'U, 'A>, f : 'A -> Eff<'U, 'B>) : Eff<'U, 'B> =
-        Eff (fun k ->
-            inc (fun v ->
-                let (Eff inc') = f v
-                inc' k))
+    member self.Bind<'U, 'A, 'B when 'U :> Effect>(inc : Inc<'U, 'A>, f : 'A -> Inc<'U, 'B>) : Inc<'U, 'B> =
+        Inc (fun k ->
+            Inc.run inc (fun v ->
+                Inc.run (f v) k))
 
     /// Wraps the given lazy function.
-    member self.Delay(f : unit -> Eff<'U, 'A>) : Eff<'U, 'A> =
-        Eff (fun k ->
-            let (Eff inc) = f ()
-            inc k)
+    member self.Delay(f : unit -> Inc<'U, 'A>) : Inc<'U, 'A> =
+        Inc (Inc.run (f ()))
 
 [<AutoOpen>]
 module EffBuilder =
