@@ -21,13 +21,13 @@ type Get<'S>(k : 'S -> Effect) =
 module State = 
 
     /// State effect handler.
-    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (inc : Inc<'U, 'A>) : Inc<'U, 'A> =
+    let rec stateHandler<'U, 'S, 'A when 'U :> State<'S>> (state : 'S) (inc : Inc<'U, 'A>) : Inc<'U, 'S * 'A> =
 
         let rec loop k state (effect : Effect) =
             match effect with
                 | :? Get<'S> as get -> loop k state (get.K state)
                 | :? Put<'S> as put -> loop k put.Value (put.K ())
-                | :? Done<'A> as done' -> k done'.Value
+                | :? Done<'A> as done' -> k (state, done'.Value)
                 | _ ->
                     effect.UnPack
                         {

@@ -11,7 +11,7 @@ let testState () =
             return! State.get ()
         } 
 
-    let x = comp |> State.stateHandler 1 |> Effect.run // 4
+    let x = comp |> State.stateHandler 1 |> Effect.run // (4, 4)
     printfn "%A" x
 
 let testStack () =
