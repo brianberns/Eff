@@ -53,6 +53,7 @@
     <Compile Include="NonDet.fs" />
     <Compile Include="Concurrency.fs" />
     <Compile Include="Searcher.fs" />
+    <Compile Include="Exception.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

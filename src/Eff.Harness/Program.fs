@@ -220,8 +220,50 @@ module SearcherTest =
             printfn "%d: %A" i x
             assert(x <> (i = 11))
 
+module ExceptionTest =
+
+    let run () =
+
+        printfn ""
+        printfn "Exception test:"
+
+        let saveDiv (x : float) (y : float) =
+            eff {
+                if y = 0.0 then
+                    do! Exception.divisionByZero x
+                    return 0.0
+                else
+                    return x / y
+            }
+
+        let x = 2.0
+        let y = 3.0
+        printfn "%A/%A =" x y
+        let q =
+            saveDiv x y
+                |> Exception.exceptionHandler
+                |> Effect.run
+        if q.IsSome then printfn "%A" q else printfn "None"
+
+        let y = 0.0
+        printfn "%A/%A =" x y
+        let q =
+            saveDiv x y
+                |> Exception.exceptionHandler
+                |> Effect.run
+        if q.IsSome then printfn "%A" q else printfn "None"
+
+        let x = 12.0
+        printfn "%A/%A =" x y
+        let q =
+            saveDiv x y
+                |> Exception.exceptionHandler
+                |> Effect.run
+        if q.IsSome then printfn "%A" q else printfn "None"
+
 [<EntryPoint>]
 let main argv =
+    (*
     StateTest.run ()
     StackTest.run ()
     StateReaderTest.run ()
@@ -230,4 +272,6 @@ let main argv =
     LogTest.run ()
     ConcurrentTest.run ()
     SearcherTest.run ()
+    *)
+    ExceptionTest.run ()
     0
